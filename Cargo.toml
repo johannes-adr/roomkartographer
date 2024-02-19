@@ -1,0 +1,27 @@
+[workspace]
+members = ["./bot","./global_lib","world_emulator", "webserver","rover_body","lidar","icp_2d","slam"]
+default-members = ["./bot"]
+resolver = "2"
+
+[workspace.dependencies]
+rplidar_drv = {path = "../3. Semester/rplidar/."}
+lidar.path = "./lidar"
+global_lib.path = "./global_lib"
+world_emulator.path = "./world_emulator"
+webserver.path = "./webserver"
+rover_body.path = "./rover_body"
+slam.path = "./slam"
+
+nalgebra = "0.32.3"
+itertools = "0.11.0"
+tokio = {version = "1.32.0",features = ["full"]}
+log = "0.4.20"
+lazy_static = "1.4.0"
+serde = {version = "1.0.188", features = ["derive"]}
+bincode = "1.3.3"
+postage = "0.5.0"
+rand = "0.8.5"
+
+
+
+icp_2d ={path = "./icp_2d"}
