@@ -1,0 +1,17 @@
+[package]
+name = "rover_body"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+log.workspace = true
+tokio.workspace = true
+nalgebra.workspace = true
+global_lib.workspace = true
+rppal = {version = "0.14.1"}
+mpu6050 = "0.1.6"
+i2cdev = "0.6.0"
+linux-embedded-hal = "0.3.2"
+icp_2d.workspace = true

@@ -1,0 +1,9 @@
+#[target.arm-unknown-linux-gnueabihf]
+#    linker = "/Users/johannesader/ibi/x-tools/arm-unknown-linux-gnueabihf/bin/arm-unknown-linux-gnueabihf-gcc"
+
+[target.armv7-unknown-linux-gnueabihf]
+linker = "arm-unknown-linux-gnueabihf-gcc"
+
+
+[target.armv7-unknown-linux-musleabihf]
+linker = "arm-linux-musleabihf-gcc"

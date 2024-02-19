@@ -1,0 +1,235 @@
+pub use super::rplidarwrapper::RpLidar;
+use global_lib::types::Scan;
+use nalgebra as na;
+
+pub struct Icp {
+    scan1: Scan,
+    scan2: Scan,
+}
+
+impl Icp {
+    pub fn new(scan1: Scan, scan2: Scan) -> Self {
+        Self { scan1, scan2 }
+    }
+
+    fn do_icp_generic(&mut self, x: f32, y: f32, translation_fn: fn(&mut Scan,&mut Scan)->na::Vector2<f32>)->(f32,f32){
+        let mut total_translation = na::Vector2::new(x, y);
+       
+        self.scan2.translate(x, y);
+        let mut i = 0;
+        while i < 30 {
+            //Calculate translation vector
+            let translation_vector = translation_fn(&mut self.scan1,&mut self.scan2);
+            self.scan2
+                .translate(translation_vector.x, translation_vector.y);
+            total_translation += translation_vector;
+
+            i += 1;
+            // Check for convergence (0.5 cm)
+            if translation_vector.norm() < 0.005 {
+                break;
+            }
+        }
+      
+        // info!("icp converged in {i} iterations");
+        (total_translation.x, total_translation.y)
+    }
+
+    pub fn do_icp_fast(&mut self, x: f32, y: f32) -> (f32, f32) {
+        let scan2orig = self.scan2.clone();
+        let res = self.do_icp_generic(x, y, center_of_mass_corresp_fast);
+        self.scan2 = scan2orig;
+        res
+    }
+
+    //This function implements the icp algorithm
+    pub fn do_icp(&mut self, x: f32, y: f32) -> (f32, f32) {
+        let scan2orig = self.scan2.clone();
+        let res = self.do_icp_generic(x, y, center_of_mass_corresp);
+        self.scan2 = scan2orig;
+        res
+    }
+
+    pub fn do_icp_rot(&mut self, angle_guess_rad: f32){
+        
+    }
+
+    pub fn do_icp_fast_once(mut self, x: f32, y: f32) -> (f32, f32) {
+        self.do_icp_generic(x, y, center_of_mass_corresp_fast)
+    }
+
+
+    pub fn do_icp_once(mut self, x: f32, y: f32) -> (f32, f32) {
+        self.do_icp_generic(x, y, center_of_mass_corresp)
+    }
+}
+
+fn center_of_mass_corresp_fast(scan1: &mut Scan, scan2: &mut Scan) -> na::Vector2<f32> {
+    let mut center_corresp = na::Point2::new(0.0, 0.0);
+    let scan2_points = scan2.get_points();
+    for point in scan2_points {
+        let closest_point = scan1.closest_point_kd(point.point());
+        center_corresp += closest_point.coords;
+    }
+    center_corresp /= scan2_points.len() as f32;
+
+    let translation_vector = center_corresp.coords - scan2.get_center_of_mass().coords;
+    translation_vector
+}
+
+//Will use a linear seach (because scan2 is moving, its very inefficient to use closest_point_fast [which relies on a kdtree])
+fn center_of_mass_corresp(scan1: &mut Scan, scan2: &mut Scan) -> na::Vector2<f32> {
+    let mut center_corresp = na::Point2::new(0.0, 0.0);
+    for point in scan1.get_points() {
+        let closest_point = scan2.closest_point(point.point());
+        center_corresp += closest_point.coords;
+    }
+    center_corresp /= scan1.get_points().len() as f32;
+
+    let translation_vector = (scan1.get_center_of_mass() - center_corresp.coords).coords;
+    translation_vector
+}
+
+
+
+
+
+
+
+
+#[cfg(test)]
+mod test {
+
+    #[test]
+    fn test_icp_linear() {
+        parse_and_plot("IcpLin", |a, b| {
+            // b.translate(3.0, 4.2);
+            let mut icp = Icp::new(a.clone(), b.clone());
+            println!("{:?}", icp.do_icp(0.0, 0.0));
+            *a = icp.scan1;
+            *b = icp.scan2;
+        });
+    }
+
+    #[test]
+    fn test_icp_kd() {
+        parse_and_plot("IcpKd", |a, b| {
+            // b.translate(3.0, 4.2);
+            let mut icp = Icp::new(a.clone(), b.clone());
+            println!("{:?}", icp.do_icp_fast(0.0, 0.0));
+            *a = icp.scan1;
+            *b = icp.scan2;
+        });
+    }
+
+    // #[test]
+    // fn test_rotation() {
+    //     parse_and_plot("Rot", |a, b| {
+    //         *a = b.clone();
+    //         b.rotate(60.0f32.to_radians());
+    //     });
+    // }
+
+    // #[test]
+    // fn test_transform() {
+    //     parse_and_plot("RotTrans", |a, b| {
+    //         b.translate(-0.15, 1.0);
+    //         b.rotate(60.0f32.to_radians());
+    //     });
+    // }
+
+    fn parse_and_plot(name: &str, func: impl Fn(&mut Scan, &mut Scan)) {
+        let mut scan1 = parse_scan("./scan1.txt");
+        let mut scan2 = parse_scan("./scan2.txt");
+        func(&mut scan1, &mut scan2);
+        scan1.assert_valid();
+        scan2.assert_valid();
+        let scan1 = scan1.get_points().iter().map(|p| p.point());
+        let scan2 = scan2.get_points().iter().map(|p| p.point());
+        plot(scan1, scan2, format!("{name}.svg")).unwrap();
+    }
+
+    use super::*;
+    use global_lib::types::parse_scan;
+    use plotters::prelude::*;
+    fn plot(
+        points1: impl Iterator<Item = na::Point2<f32>>,
+        points2: impl Iterator<Item = na::Point2<f32>>,
+        name: String,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let root = SVGBackend::new(&name, (640, 480)).into_drawing_area();
+        root.fill(&WHITE)?;
+
+        let mut chart = ChartBuilder::on(&root)
+            .margin(5)
+            .x_label_area_size(30)
+            .y_label_area_size(30)
+            .build_cartesian_2d(-4f32..4f32, -4f32..4f32)?;
+
+        chart.configure_mesh().draw()?;
+        // Generate two point clouds
+        // Plot the points
+        chart.draw_series(points1.map(|p| Circle::new((p.x, p.y), 1, BLUE.filled())))?;
+        chart.draw_series(points2.map(|p| Circle::new((p.x, p.y), 1, RED.filled())))?;
+
+        // Finish the drawing
+        root.present()?;
+        println!("Plot saved to {name}");
+
+        Ok(())
+    }
+}
+
+/*
+
+//This error func is the correct one
+   pub fn error_func(&mut self, offset: f32) -> f32 {
+        let mut total_dist = 0.0;
+        self.scan2.translate(-offset,0.0);
+
+        for point in self.scan1.get_points() {
+            let mut min_dist = f32::MAX;
+            for other in self.scan2.get_points() {
+                let dist = na::distance_squared(point, other).sqrt();
+                if dist < min_dist {
+                    min_dist = dist;
+                }
+            }
+            if min_dist == f32::MAX {
+                panic!("ICP Failed!")
+            }
+
+            total_dist += min_dist;
+        }
+        self.scan2.translate(offset,0.0);
+        let avg_dist = total_dist / self.scan1.get_points().len() as f32;
+        avg_dist
+    }
+
+
+
+//This error func impl is a bit slower
+pub fn error_func(&self,offset: f32) -> f32{
+    let mut total_dist = 0.0;
+    for point in self.scan1.get_points(){
+        let mut min_dist = f32::MAX;
+        for other in self.scan2.get_points(){
+            let mut other = *other;
+            other.x -= offset;
+            let dist = na::distance_squared(point, &other).sqrt();
+            if dist < min_dist{
+                min_dist = dist;
+            }
+        }
+
+        if min_dist == f32::MAX{
+            panic!("ICP Failed!")
+        }
+
+        total_dist += min_dist;
+    }
+
+    let avg_dist = total_dist / self.scan1.get_points().len() as f32;
+    avg_dist
+}
+*/

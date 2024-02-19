@@ -1,0 +1,6 @@
+
+
+cd "../../3. Semester/smith/smith-codegen"
+cargo run -- --export-type rust --output-file "../../../Roomkartographer2/webserver/src/smith_types.rs" --schema-file "../../../Roomkartographer2/webserver/schema.smith"
+
+# cargo run ../../3.\Semester/smith/smith-codegen

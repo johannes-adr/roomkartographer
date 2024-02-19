@@ -1,0 +1,18 @@
+[package]
+name = "lidar"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+serialport = {version = "4.2.2", default-features = false}
+rplidar_drv = {workspace = true}
+nalgebra.workspace = true
+tokio.workspace = true
+log.workspace = true
+global_lib.workspace = true
+
+
+
+

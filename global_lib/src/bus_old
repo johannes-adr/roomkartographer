@@ -1,0 +1,99 @@
+use std::sync::Arc;
+
+use lazy_static::lazy_static;
+use paste::paste;
+use tokio::sync::broadcast;
+macro_rules! generate_impls_and_enum {
+    (
+        #[derive($($derive:tt)*)]
+        enum $enum_name:ident {
+            $($variant:ident($type:ty)),* $(,)?
+        }
+    ) => {
+        #[derive($($derive)*)]
+        pub enum $enum_name {
+            $($variant($type)),*
+        }
+
+
+        impl Bus {
+            $(
+                paste!{
+                pub async fn [<on_ $variant:lower>](&mut self) -> $type {
+                    loop {
+                        let msg = self.on_message().await;
+                        if let $enum_name::$variant(data) = msg {
+                            return data;
+                        }
+                    }
+                }
+            }
+            )*
+        }
+    };
+}
+
+generate_impls_and_enum!(
+    #[derive(Clone)]
+    enum Data {
+        Scan(Arc<super::types::Scan>),
+        IMURot(f32),
+    }
+);
+
+type BusMessage = Data;
+
+pub struct Bus {
+    bus: (
+        broadcast::Sender<BusMessage>,
+        broadcast::Receiver<BusMessage>,
+    ),
+}
+
+lazy_static!(
+    static ref BUS_1: Bus = Bus::new();
+);
+
+impl Clone for Bus {
+    fn clone(&self) -> Self {
+        let sender = self.bus.0.clone();
+        let receiver = sender.subscribe();
+        Self {
+            bus: (sender, receiver),
+        }
+    }
+}
+
+impl Bus {
+    fn new() -> Self {
+        Self {
+            bus: broadcast::channel(10),
+        }
+    }
+
+    pub fn global_bus() -> Bus{
+        BUS_1.clone()
+    }
+
+    pub fn broadcast(&self, data: BusMessage) {
+        self.bus.0.send(data);
+    }
+
+    pub async fn on_message(&mut self) -> BusMessage {
+        self.bus.1.recv().await.unwrap()
+    }
+
+    // pub async fn on_scan(&mut self) -> Arc<Scan> {
+    //     loop {
+    //         let msg = self.on_message().await;
+    //         if let Data::Scan(s) = msg {
+    //             return s;
+    //         }
+    //     }
+    // }
+}
+
+// pub trait BotMessageStation{
+//     pub async fn on_lidar_scan(&self) -> Arc<types::Scan>;
+//     pub fn publish_lidar_scan(&self, scan: types::Scan);
+// }

@@ -1,0 +1,15 @@
+[package]
+name = "slam"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bincode.workspace = true
+serde.workspace = true
+icp_2d.workspace = true
+itertools.workspace = true
+speedy2d = "2.0.0"
+nalgebra.workspace = true
+serde_json = "1.0.113"

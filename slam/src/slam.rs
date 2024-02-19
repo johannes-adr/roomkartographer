@@ -1,0 +1,121 @@
+use std::rc::Rc;
+
+use icp_2d::ICPResult;
+use nalgebra as na;
+
+use crate::ScanLog;
+
+#[derive(Default)]
+pub struct Slam{
+    pos_abs: na::Point2<f32>,
+    rot_abs: f32,
+
+    last_translation: na::Point2<f32>,
+    last_rot: f32,
+    
+    last_pose: Option<Pose>,
+}
+
+
+
+impl Slam{
+    pub fn new()->Self{
+        Self{..Default::default()}
+    }
+
+    pub fn get_pos(&self) -> na::Point2<f32>{
+        self.pos_abs
+    }
+
+    pub fn get_rot(&self) -> f32{
+        self.rot_abs
+    }
+
+    pub fn add_pose(&mut self,scan: ScanLog){
+        if self.last_pose.is_none(){
+            _=self.last_pose.insert(Pose::from_scan(scan));
+            return;
+        }
+        let last_pose = self.last_pose.as_ref().unwrap();
+        let icp = icp_2d::Icp::new(&last_pose.scan.points, scan.points.clone(),200,Unit::from_mm(1.0).to_meter(),0.1f32.to_radians(),0.01);
+        let (
+            ICPResult {
+                mut x_offset,
+                mut y_offset,
+                mut rotation_offset_rad,
+                convergence,
+            },
+            _,
+        ) = icp.do_icp(self.last_translation.x, self.last_translation.y,self.last_rot);
+        println!("{x_offset}");
+        if x_offset.abs() < Unit::from_cm(1.0).to_meter(){
+            x_offset = 0.0;
+        }
+
+        if y_offset.abs() < Unit::from_cm(1.0).to_meter(){
+            y_offset = 0.0;
+        }
+
+
+        if rotation_offset_rad.abs() < 1.0f32.to_radians(){
+            rotation_offset_rad = 0.0;
+        }
+
+
+        self.last_translation = na::Point2::new(x_offset,y_offset);
+        self.last_rot = rotation_offset_rad;
+
+        self.rot_abs += rotation_offset_rad;
+        // Normalize rotation to stay within [-π, π]
+        self.rot_abs = (self.rot_abs + std::f32::consts::PI) % (2.0 * std::f32::consts::PI)
+            - std::f32::consts::PI;
+
+        // Create a rotation matrix from the updated rotation
+        let rot_matrix = na::Rotation2::new(self.rot_abs);
+
+        // Update position by applying the rotation to the offset and then adding it to the current position
+        let offset = rot_matrix * na::Vector2::new(x_offset, y_offset); // Apply rotation to the offset
+        self.pos_abs += na::Vector2::from(offset); // Update the position
+
+        drop(last_pose);
+        _=self.last_pose.insert(Pose::from_scan(scan));
+    }
+}
+
+
+struct Pose{
+    position: na::Point2<f32>,
+    orientation: f32,
+    scan: ScanLog,
+    edges: Vec<Edge>
+}
+
+impl Pose{
+    fn from_scan(scan: ScanLog)->Self{
+        Self{position: [0.0,0.0].into(),orientation: 0.0, scan, edges: vec![]}
+    }
+}
+
+struct Edge{
+    confidence: f32,
+    rotation: f32,
+    translation: na::Vector2<f32>,
+    to: Box<Pose>
+}
+
+
+
+struct Unit(f32);
+impl Unit{
+    fn from_cm(cm: f32) -> Self{
+        Self(cm)
+    }
+
+    fn from_mm(mm: f32) -> Self{
+        Self(mm / 10.0)
+    }
+
+    fn to_meter(&self)->f32{
+        self.0 / 100.0
+    }
+}
