@@ -1,6 +1,7 @@
 use global_lib::bus::{BusLidarScan, BusManager, BusRoverMovement, BusIMURotation};
 use global_lib::CONFIG;
 use log::info;
+use navigation::start_navigator;
 mod position_tracker;
 #[tokio::main]
 async fn main() {
@@ -12,16 +13,14 @@ async fn main() {
     let movement_bus = BusManager::get_rovermovement_bus();
     world_emulator::emulate_world(lidarbus.clone(),imubus.clone(),movement_bus.clone());
     // spawn_real(lidarbus.clone(),movement_bus.clone(),imubus.clone());
-
-    let lidarbus2 = lidarbus.clone();
-    tokio::spawn(async move{ webserver::start_server(lidarbus2,movement_bus,imubus).await });
-    let mut lidarlistener = lidarbus.subscribe();
-    loop {
-        let data = lidarlistener.recv().await.unwrap();
-        // println!("{}", data.get_points().len())
+    {
+        let lidarbus2 = lidarbus.clone();
+        let movement_bus2 = movement_bus.clone();
+        tokio::spawn(async move{ webserver::start_server(lidarbus2,movement_bus2,imubus).await });
     }
 
-    // let bus = bus::Bus::new();
+
+    start_navigator(movement_bus, lidarbus);
 }
 
 // fn spawn_real(bus_lidar: BusLidarScan,movement_bus: BusRoverMovement, imu_bus: BusIMURotation) {

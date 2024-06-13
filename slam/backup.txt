@@ -1,9 +1,10 @@
 use std::rc::Rc;
 
-use global_lib::types::PointCloud;
 use icp_2d::ICPResult;
-use nalgebra::{self as na, is_convertible};
-use super::scanlog::ScanLog;
+use nalgebra as na;
+
+use crate::ScanLog;
+
 #[derive(Default)]
 pub struct Slam{
     pos_abs: na::Point2<f32>,
@@ -11,20 +12,15 @@ pub struct Slam{
 
     last_translation: na::Point2<f32>,
     last_rot: f32,
-
-    last_pose: Option<Rc<dyn PointCloud>>,
-    pub min_converg: f32,
-    total_converg: f64,
-    included_scans: usize
+    
+    last_pose: Option<Pose>,
 }
-
-
 
 
 
 impl Slam{
     pub fn new()->Self{
-        Self{min_converg: f32::MAX,..Default::default()}
+        Self{..Default::default()}
     }
 
     pub fn get_pos(&self) -> na::Point2<f32>{
@@ -35,20 +31,15 @@ impl Slam{
         self.rot_abs
     }
 
-    pub fn get_avg_convergence(&self) -> f64{
-        self.total_converg / self.included_scans as f64
-    }
+    pub fn add_pose(&mut self,scan: ScanLog){
+        
 
-    pub fn add_pose(&mut self,scan: Rc<dyn PointCloud>){
-
-        self.included_scans+=1;
         if self.last_pose.is_none(){
-            _=self.last_pose.insert(scan.clone());
+            _=self.last_pose.insert(Pose::from_scan(scan));
             return;
         }
         let last_pose = self.last_pose.as_ref().unwrap();
-        let last_pose_points = last_pose.points();
-        let icp = icp_2d::Icp::new(&last_pose_points, scan.points(),100,Unit::from_mm(1.0).to_meter(),0.01f32.to_radians(),0.01);
+        let icp = icp_2d::Icp::new(&last_pose.scan.points, scan.points.clone(),100,Unit::from_mm(1.0).to_meter(),0.01f32.to_radians(),0.01);
         let (
             ICPResult {
                 mut x_offset,
@@ -58,11 +49,6 @@ impl Slam{
             },
             _,
         ) = icp.do_icp(self.last_translation.x, self.last_translation.y,0.0);
-        if convergence < self.min_converg{
-            self.min_converg = convergence;
-        }
-        self.total_converg += convergence as f64;
-
         if x_offset.abs() < Unit::from_cm(1.0).to_meter(){
             x_offset = 0.0;
         }
@@ -92,8 +78,29 @@ impl Slam{
         let offset = rot_matrix * na::Vector2::new(x_offset, y_offset); // Apply rotation to the offset
         self.pos_abs += na::Vector2::from(offset); // Update the position
 
-        _=self.last_pose.insert(scan);
+        _=self.last_pose.insert(Pose::from_scan(scan));
     }
+}
+
+
+struct Pose{
+    position: na::Point2<f32>,
+    orientation: f32,
+    scan: ScanLog,
+    edges: Vec<Edge>
+}
+
+impl Pose{
+    fn from_scan(scan: ScanLog)->Self{
+        Self{position: [0.0,0.0].into(),orientation: 0.0, scan, edges: vec![]}
+    }
+}
+
+struct Edge{
+    confidence: f32,
+    rotation: f32,
+    translation: na::Vector2<f32>,
+    to: Box<Pose>
 }
 
 

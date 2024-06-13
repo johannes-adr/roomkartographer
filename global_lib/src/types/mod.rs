@@ -10,5 +10,6 @@ pub enum RoverMovement{
     Stop,
     Right,
     Left,
-    Speed(f32)
+    Speed(f32),
+    Teleport(nalgebra::Point2<f32>)
 }

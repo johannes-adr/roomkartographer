@@ -41,7 +41,7 @@ impl BotLoc {
         na::Point2::new(lidar_position_x, lidar_position_y)
     }
 
-   
+
 
     pub fn rotate(&mut self, rot: f32) {
         self.rotation += rot;
@@ -60,9 +60,10 @@ impl BotLoc {
 
 pub fn emulate_world(lidar: BusLidarScan, imu: BusIMURotation, movement: BusRoverMovement) {
     let world: world::World = world::World::world1();
+    let spawn = world.spawn();
     const START_ROT: f32 = 0.0f32;
     let position = Arc::new(RwLock::new(BotLoc {
-        position: world.spawn(),
+        position: spawn,
         rotation: START_ROT.to_radians(),
     }));
     {
@@ -130,6 +131,11 @@ pub fn emulate_world(lidar: BusLidarScan, imu: BusIMURotation, movement: BusRove
                             global_lib::types::RoverMovement::Speed(s) =>{
                                 rot_per_second = std::f32::consts::PI * s;
                                 meter_per_second = s / 3.0;
+                            },
+                            global_lib::types::RoverMovement::Teleport(point) =>{
+                                 let mut position = position.write().await;
+                                 position.position = point + spawn.coords;
+                                 drop(position);
                             }
                         }
                     }

@@ -161,6 +161,20 @@ pub struct Scan {
     time: SystemTime,
 }
 
+pub trait PointCloud{
+    fn points(&self) -> Vec<(f32,f32)>;
+}
+
+impl PointCloud for Scan{
+    fn points(&self) -> Vec<(f32,f32)> {
+        self.points.iter().map(|m|{
+            let p = m.point();
+            (p.x,p.y)
+        }).collect()
+    }
+}
+
+
 impl Default for Scan{
     fn default() -> Self {
         Self { points: Default::default(), center_of_mass: Default::default(), kd_tree: Default::default(), time: SystemTime::now() }

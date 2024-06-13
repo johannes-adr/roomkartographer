@@ -2,13 +2,12 @@
     import { onMount } from "svelte";
 
     import init, { SmithJS } from "../public/pkg/smith_js";
-    import { handleWebsocket } from "./logic/canvas_controller";
+    import { handleWebsocket, rotation } from "./logic/canvas_controller";
     import CoordinateSystem from "./logic/coordinatesystem";
     import KeyboardCapture from "./components/KeyboardCapture.svelte";
     let ws: WebSocket | undefined | null = undefined;
 
     let recording = false;
-
     let smith: SmithJS | undefined;
     let canv: HTMLCanvasElement;
 
@@ -49,9 +48,9 @@
         const blob = new Blob([txt], {type: 'text/json'});
         const elem = window.document.createElement('a');
         elem.href = window.URL.createObjectURL(blob);
-        elem.download = "SLAMData.json";        
+        elem.download = "SLAMData.json";
         document.body.appendChild(elem);
-        elem.click();        
+        elem.click();
         document.body.removeChild(elem);
     }}
         >{#if recording}
@@ -61,6 +60,7 @@
         {/if} Recording</button
     >
     <div>
+    <div>Rotation: {$rotation}</div>
     <canvas width="400px" height="400px" bind:this={canv} />
 
     </div>

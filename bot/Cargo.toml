@@ -17,4 +17,5 @@ log.workspace = true
 lidar.workspace = true
 world_emulator.workspace = true
 webserver.workspace = true
+navigation.workspace=true
 # rover_body.workspace = true

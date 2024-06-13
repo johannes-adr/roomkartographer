@@ -4,10 +4,7 @@ use nalgebra as na;
 use rplidar_drv::RplidarDevice;
 use serialport::SerialPort;
 
-use tokio::sync::{
-    mpsc::{Receiver, Sender},
-    Notify, RwLock,
-};
+use tokio::sync::RwLock;
 
 use global_lib::types::Scan;
 
@@ -33,7 +30,6 @@ impl RpLidar {
         let mut lidar: RplidarDevice<dyn SerialPort> = RplidarDevice::with_stream(serial_port);
 
         let actual_mode = lidar
-            // .start_scan_with_options(&ScanOptions::with_mode(0/*0 2*/))
             .start_scan()
             .expect("failed to start scan in standard mode");
 

@@ -1,5 +1,5 @@
 [workspace]
-members = ["./bot","./global_lib","world_emulator", "webserver","rover_body","lidar","icp_2d","slam"]
+members = ["./bot","./global_lib","world_emulator", "webserver","rover_body","lidar","icp_2d","slam", "./navigation"]
 default-members = ["./bot"]
 resolver = "2"
 
@@ -11,6 +11,7 @@ world_emulator.path = "./world_emulator"
 webserver.path = "./webserver"
 rover_body.path = "./rover_body"
 slam.path = "./slam"
+navigation.path = "./navigation"
 
 nalgebra = "0.32.3"
 itertools = "0.11.0"

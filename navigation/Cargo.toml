@@ -1,19 +1,22 @@
 [package]
-name = "slam"
+name = "navigation"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bincode.workspace = true
-serde.workspace = true
-icp_2d.workspace = true
-itertools.workspace = true
 speedy2d = "2.0.0"
+tokio.workspace = true
 nalgebra.workspace = true
-serde_json = "1.0.113"
 global_lib.workspace = true
-rand.workspace = true
-image = "0.23"
-gif = "0.11"
+slam.workspace = true
+derive_more = "0.99.17"
+ordered-float = "3.9.1"
+
+
+geo = "0.26.0"
+contour = "0.10.0"
+line_drawing = "1.0.0"
+pathfinding = "4.3.1"
+arrayvec = "0.7.4"
