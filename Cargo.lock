@@ -1337,7 +1337,7 @@ version = "0.1.0"
 dependencies = [
  "bincode",
  "config",
- "icp_2d",
+ "icp_2d 0.1.0 (git+https://github.com/johannes-adr/icp_2d.git)",
  "kdtree",
  "lazy_static",
  "log",
@@ -1582,6 +1582,15 @@ dependencies = [
  "kdtree",
  "nalgebra 0.32.3",
  "plotters",
+]
+
+[[package]]
+name = "icp_2d"
+version = "0.1.0"
+source = "git+https://github.com/johannes-adr/icp_2d.git#0c14c65e78e4307cdbf3f3804e3319587485bdb4"
+dependencies = [
+ "kdtree",
+ "nalgebra 0.32.3",
 ]
 
 [[package]]
@@ -2795,7 +2804,7 @@ version = "0.1.0"
 dependencies = [
  "global_lib",
  "i2cdev 0.6.0",
- "icp_2d",
+ "icp_2d 0.1.0 (git+https://github.com/johannes-adr/icp_2d.git)",
  "linux-embedded-hal",
  "log",
  "mpu6050",
@@ -2807,6 +2816,7 @@ dependencies = [
 [[package]]
 name = "rplidar_drv"
 version = "0.6.0"
+source = "git+https://github.com/johannes-adr/rplidar.git#9cb547b48c4e904aaf79a649ecf69649e16d2d77"
 dependencies = [
  "byteorder",
  "crc",
@@ -3106,7 +3116,7 @@ dependencies = [
  "bincode",
  "gif",
  "global_lib",
- "icp_2d",
+ "icp_2d 0.1.0 (git+https://github.com/johannes-adr/icp_2d.git)",
  "image",
  "itertools 0.11.0",
  "nalgebra 0.32.3",

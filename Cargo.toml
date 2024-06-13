@@ -4,7 +4,7 @@ default-members = ["./bot"]
 resolver = "2"
 
 [workspace.dependencies]
-rplidar_drv = {path = "../3. Semester/rplidar/."}
+rplidar_drv = {git = "https://github.com/johannes-adr/rplidar.git"}
 lidar.path = "./lidar"
 global_lib.path = "./global_lib"
 world_emulator.path = "./world_emulator"
@@ -25,4 +25,4 @@ rand = "0.8.5"
 
 
 
-icp_2d ={path = "./icp_2d"}
+icp_2d ={git = "https://github.com/johannes-adr/icp_2d.git"}
