@@ -230,10 +230,10 @@ pub async fn start_server(lidarbus: BusLidarScan, movementbus: BusRoverMovement,
             .wrap(Logger::new("%a -> %r (%Dms)").log_target("http_log"))
             .service(web::resource("/ws").route(web::get().to(frontendbridge)));
         
-            #[cfg(target_os = "macos")]
+            // #[cfg(target_os = "macos")]
             let app = app.service(Files::new("/", "./webserver/web2/public").index_file("index.html"));
-            #[cfg(not(target_os = "macos"))]
-            let app = app.route("/{_:.*}", web::get().to(get_asset));
+            // #[cfg(not(target_os = "macos"))]
+            // let app = app.route("/{_:.*}", web::get().to(get_asset));
 
             app
         // .service(Files::new("/", "../dineryfrontend/dist/").index_file("index.html"))
