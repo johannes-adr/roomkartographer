@@ -1,1 +1,0 @@
-esbuild main.ts --bundle --target=esnext --outfile=bundle.js --watch
