@@ -1,5 +1,5 @@
 [workspace]
-members = ["./bot","./global_lib","world_emulator", "webserver","rover_body","lidar","icp_2d","slam", "./navigation"]
+members = ["./bot","./global_lib","world_emulator", "webserver","rover_body","lidar","slam", "./navigation"]
 default-members = ["./bot"]
 resolver = "2"
 

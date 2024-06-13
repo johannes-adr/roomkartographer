@@ -1,0 +1,12 @@
+{
+  "name": "smith-js",
+  "version": "0.2.3",
+  "files": [
+    "smith_js_bg.wasm",
+    "smith_js.js",
+    "smith_js.d.ts"
+  ],
+  "module": "smith_js.js",
+  "types": "smith_js.d.ts",
+  "sideEffects": false
+}
